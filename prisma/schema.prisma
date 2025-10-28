@@ -1,15 +1,204 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model cliente {
+  empressa_pessoa_juridica_pessoa_idpessoa Int      @id @db.UnsignedInt
+  empressa                                 empressa @relation(fields: [empressa_pessoa_juridica_pessoa_idpessoa], references: [pessoa_juridica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_cliente_empressa1")
+  pedido                                   pedido[]
+}
+
+model comprador {
+  funcionario_pessoa_fisica_pessoa_idpessoa Int             @id @db.UnsignedInt
+  funcionario                               funcionario     @relation(fields: [funcionario_pessoa_fisica_pessoa_idpessoa], references: [pessoa_fisica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_comprador_funcionario1")
+  pedido_compra                             pedido_compra[]
+}
+
+model contato {
+  pessoa_fisica_pessoa_idpessoa   Int             @db.UnsignedInt
+  pessoa_juridica_pessoa_idpessoa Int             @db.UnsignedInt
+  departamento                    String          @db.VarChar(45)
+  status                          contato_status?
+  pessoa_fisica                   pessoa_fisica   @relation(fields: [pessoa_fisica_pessoa_idpessoa], references: [pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pessoa_fisica_has_pessoa_juridica_pessoa_fisica1")
+  pessoa_juridica                 pessoa_juridica @relation(fields: [pessoa_juridica_pessoa_idpessoa], references: [pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pessoa_fisica_has_pessoa_juridica_pessoa_juridica1")
+
+  @@id([pessoa_fisica_pessoa_idpessoa, pessoa_juridica_pessoa_idpessoa])
+  @@index([pessoa_fisica_pessoa_idpessoa], map: "fk_pessoa_fisica_has_pessoa_juridica_pessoa_fisica1_idx")
+  @@index([pessoa_juridica_pessoa_idpessoa], map: "fk_pessoa_fisica_has_pessoa_juridica_pessoa_juridica1_idx")
+}
+
+model empressa {
+  pessoa_juridica_pessoa_idpessoa Int             @id @db.UnsignedInt
+  cliente                         cliente?
+  pessoa_juridica                 pessoa_juridica @relation(fields: [pessoa_juridica_pessoa_idpessoa], references: [pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_empressa_pessoa_juridica1")
+  fornecedor                      fornecedor?
+}
+
+model fornecedor {
+  empressa_pessoa_juridica_pessoa_idpessoa Int             @id @db.UnsignedInt
+  empressa                                 empressa        @relation(fields: [empressa_pessoa_juridica_pessoa_idpessoa], references: [pessoa_juridica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_fornecedor_empressa1")
+  pedido_compra                            pedido_compra[]
+}
+
+model funcionario {
+  pessoa_fisica_pessoa_idpessoa Int           @id @db.UnsignedInt
+  comprador                     comprador?
+  pessoa_fisica                 pessoa_fisica @relation(fields: [pessoa_fisica_pessoa_idpessoa], references: [pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_funcionario_pessoa_fisica1")
+  vendedor                      vendedor?
+}
+
+model insumo {
+  idinsumo      Int             @id @unique(map: "idinsumo_UNIQUE") @default(autoincrement()) @db.UnsignedInt
+  descricao     String          @db.VarChar(45)
+  unidade       insumo_unidade?
+  insumo_pedido insumo_pedido[]
+}
+
+model insumo_pedido {
+  insumo_idinsumo               Int           @db.UnsignedInt
+  pedido_compra_idpedido_compra Int           @db.UnsignedInt
+  quantidade                    String        @db.VarChar(45)
+  valor                         String        @db.VarChar(45)
+  insumo                        insumo        @relation(fields: [insumo_idinsumo], references: [idinsumo], onDelete: NoAction, onUpdate: NoAction, map: "fk_insumo_has_pedido_compra_insumo1")
+  pedido_compra                 pedido_compra @relation(fields: [pedido_compra_idpedido_compra], references: [idpedido_compra], onDelete: NoAction, onUpdate: NoAction, map: "fk_insumo_has_pedido_compra_pedido_compra1")
+
+  @@id([insumo_idinsumo, pedido_compra_idpedido_compra])
+  @@index([insumo_idinsumo], map: "fk_insumo_has_pedido_compra_insumo1_idx")
+  @@index([pedido_compra_idpedido_compra], map: "fk_insumo_has_pedido_compra_pedido_compra1_idx")
+}
+
+model lote {
+  idlote            Int      @id @unique(map: "idlote_UNIQUE") @default(autoincrement()) @db.UnsignedInt
+  data              DateTime @db.Date
+  produto_idproduto Int      @db.UnsignedInt
+  pedido_idpedido   Int      @db.UnsignedInt
+  pedido            pedido   @relation(fields: [pedido_idpedido], references: [idpedido], onDelete: NoAction, onUpdate: NoAction, map: "fk_lote_pedido1")
+  produto           produto  @relation(fields: [produto_idproduto], references: [idproduto], onDelete: NoAction, onUpdate: NoAction, map: "fk_lote_produto1")
+
+  @@index([pedido_idpedido], map: "fk_lote_pedido1_idx")
+  @@index([produto_idproduto], map: "fk_lote_produto1_idx")
+}
+
+model pedido {
+  idpedido                                           Int              @id @unique(map: "idpedido_UNIQUE") @db.UnsignedInt
+  data                                               DateTime         @db.Date
+  cliente_empressa_pessoa_juridica_pessoa_idpessoa   Int              @db.UnsignedInt
+  vendedor_funcionario_pessoa_fisica_pessoa_idpessoa Int              @db.UnsignedInt
+  lote                                               lote[]
+  cliente                                            cliente          @relation(fields: [cliente_empressa_pessoa_juridica_pessoa_idpessoa], references: [empressa_pessoa_juridica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pedido_cliente1")
+  vendedor                                           vendedor         @relation(fields: [vendedor_funcionario_pessoa_fisica_pessoa_idpessoa], references: [funcionario_pessoa_fisica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pedido_vendedor1")
+  produto_pedido                                     produto_pedido[]
+
+  @@index([cliente_empressa_pessoa_juridica_pessoa_idpessoa], map: "fk_pedido_cliente1_idx")
+  @@index([vendedor_funcionario_pessoa_fisica_pessoa_idpessoa], map: "fk_pedido_vendedor1_idx")
+}
+
+model pedido_compra {
+  idpedido_compra                                     Int             @id @unique(map: "idpedido_compra_UNIQUE") @default(autoincrement()) @db.UnsignedInt
+  data                                                DateTime        @db.Date
+  fornecedor_empressa_pessoa_juridica_pessoa_idpessoa Int             @db.UnsignedInt
+  comprador_funcionario_pessoa_fisica_pessoa_idpessoa Int             @db.UnsignedInt
+  insumo_pedido                                       insumo_pedido[]
+  comprador                                           comprador       @relation(fields: [comprador_funcionario_pessoa_fisica_pessoa_idpessoa], references: [funcionario_pessoa_fisica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pedido_compra_comprador1")
+  fornecedor                                          fornecedor      @relation(fields: [fornecedor_empressa_pessoa_juridica_pessoa_idpessoa], references: [empressa_pessoa_juridica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pedido_compra_fornecedor1")
+
+  @@index([comprador_funcionario_pessoa_fisica_pessoa_idpessoa], map: "fk_pedido_compra_comprador1_idx")
+  @@index([fornecedor_empressa_pessoa_juridica_pessoa_idpessoa], map: "fk_pedido_compra_fornecedor1_idx")
+}
+
+model pessoa {
+  idpessoa        Int              @id @unique(map: "idpessoa_UNIQUE") @default(autoincrement()) @db.UnsignedInt
+  nome            String           @db.VarChar(45)
+  e_mail          String           @map("e-mail") @db.VarChar(65)
+  telefone        String           @db.VarChar(20)
+  pessoa_fisica   pessoa_fisica?
+  pessoa_juridica pessoa_juridica?
+  usuario         usuario[]
+}
+
+model pessoa_fisica {
+  pessoa_idpessoa Int                 @id @db.UnsignedInt
+  cpf             String              @db.VarChar(45)
+  rg              String?             @db.VarChar(45)
+  data_nascimento DateTime?           @db.Date
+  sexo            pessoa_fisica_sexo?
+  contato         contato[]
+  funcionario     funcionario?
+  pessoa          pessoa              @relation(fields: [pessoa_idpessoa], references: [idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pessoa_fisica_pessoa1")
+}
+
+model pessoa_juridica {
+  pessoa_idpessoa Int       @id @db.UnsignedInt
+  cnpj            String    @unique(map: "cnpj_UNIQUE") @db.VarChar(14)
+  insc_est        String    @db.VarChar(15)
+  nome_fantasia   String?   @db.VarChar(45)
+  contato         contato[]
+  empressa        empressa?
+  pessoa          pessoa    @relation(fields: [pessoa_idpessoa], references: [idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_pessoa_juridica_pessoa")
+}
+
+model produto {
+  idproduto      Int              @id @unique(map: "idproduto_UNIQUE") @db.UnsignedInt
+  descricao      String           @db.VarChar(45)
+  unidade        produto_unidade
+  valor          String           @db.VarChar(45)
+  lote           lote[]
+  produto_pedido produto_pedido[]
+}
+
+model produto_pedido {
+  produto_idproduto Int     @db.UnsignedInt
+  pedido_idpedido   Int     @db.UnsignedInt
+  quantidade        Float
+  valor             Float
+  pedido            pedido  @relation(fields: [pedido_idpedido], references: [idpedido], onDelete: NoAction, onUpdate: NoAction, map: "fk_produto_has_pedido_pedido1")
+  produto           produto @relation(fields: [produto_idproduto], references: [idproduto], onDelete: NoAction, onUpdate: NoAction, map: "fk_produto_has_pedido_produto1")
+
+  @@id([produto_idproduto, pedido_idpedido])
+  @@index([pedido_idpedido], map: "fk_produto_has_pedido_pedido1_idx")
+  @@index([produto_idproduto], map: "fk_produto_has_pedido_produto1_idx")
+}
+
+model usuario {
+  idusuario       Int     @id @unique(map: "idusuario_UNIQUE") @default(autoincrement()) @db.UnsignedInt
+  senha           String? @db.VarChar(64)
+  pessoa_idpessoa Int     @db.UnsignedInt
+  pessoa          pessoa  @relation(fields: [pessoa_idpessoa], references: [idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_usuario_pessoa1")
+
+  @@index([pessoa_idpessoa], map: "fk_usuario_pessoa1_idx")
+}
+
+model vendedor {
+  metar                                     Float
+  funcionario_pessoa_fisica_pessoa_idpessoa Int         @id @db.UnsignedInt
+  pedido                                    pedido[]
+  funcionario                               funcionario @relation(fields: [funcionario_pessoa_fisica_pessoa_idpessoa], references: [pessoa_fisica_pessoa_idpessoa], onDelete: NoAction, onUpdate: NoAction, map: "fk_vendedor_funcionario1")
+}
+
+enum insumo_unidade {
+  un
+  lt
+  kg
+}
+
+enum produto_unidade {
+  un
+  lt
+  kg
+}
+
+enum contato_status {
+  ativo
+  inativo
+}
+
+enum pessoa_fisica_sexo {
+  M
+  F
 }
