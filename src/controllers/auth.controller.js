@@ -12,22 +12,15 @@ const authController = {
   login: async (req, res) => {
     try {
       const { username, password } = req.body;
-
-      // 1. Chama o service para executar a lógica de negócio
       const token = await authService.login(username, password);
-
-      // 2. Em caso de sucesso, envia a resposta com o token
       res.status(200).json({
         message: "Login bem-sucedido!",
         token: token,
       });
     } catch (error) {
-      // 3. Se o service lançar um erro, captura e envia a resposta apropriada
       if (error.message === "Credenciais inválidas") {
         return res.status(401).json({ message: error.message });
       }
-
-      // Para qualquer outro erro inesperado, retorna um erro de servidor
       res
         .status(500)
         .json({ message: "Erro interno no servidor.", error: error.message });
@@ -41,9 +34,12 @@ const authController = {
    */
   forgotPassword: async (req, res) => {
     try {
-      res
-        .status(501)
-        .json({ message: "Endpoint de forgotPassword não implementado." });
+      const { email } = req.body;
+      await authService.forgotPassword(email);
+      res.status(200).json({
+        message:
+          "Se um usuário com este e-mail existir, um link de recuperação de senha foi enviado.",
+      });
     } catch (error) {
       res
         .status(500)

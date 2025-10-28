@@ -1,7 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth.controller");
-const { validateLogin } = require("../middlewares/validation.middleware"); // 1. Importar o middleware
+// 1. Importar o novo middleware
+const {
+  validateLogin,
+  validateForgotPassword,
+} = require("../middlewares/validation.middleware");
 
 /**
  * @swagger
@@ -51,7 +55,6 @@ const { validateLogin } = require("../middlewares/validation.middleware"); // 1.
  *       401:
  *         description: Credenciais inválidas (usuário ou senha incorretos)
  */
-// 2. Adicionar o middleware na cadeia de execução da rota
 router.post("/login", validateLogin, authController.login);
 
 /**
@@ -60,11 +63,39 @@ router.post("/login", validateLogin, authController.login);
  *   post:
  *     summary: Inicia o processo de recuperação de senha
  *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: pedro.pohlmann@example.com
  *     responses:
- *       501:
- *         description: Endpoint não implementado
+ *       200:
+ *         description: Resposta de sucesso genérica para evitar enumeração de usuários
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Se um usuário com este e-mail existir, um link de recuperação de senha foi enviado.
+ *       400:
+ *         description: O e-mail fornecido é inválido
  */
-router.post("/forgot-password", authController.forgotPassword);
+// 2. Conectar o middleware à rota
+router.post(
+  "/forgot-password",
+  validateForgotPassword,
+  authController.forgotPassword,
+);
 
 /**
  * @swagger
