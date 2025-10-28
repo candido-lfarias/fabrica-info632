@@ -16,7 +16,7 @@ const loginSchema = Joi.object({
   }),
 });
 
-// NOVO: Schema de validação para a requisição de recuperação de senha
+// Schema de validação para a requisição de recuperação de senha
 const forgotPasswordSchema = Joi.object({
   email: Joi.string().email().required().messages({
     "string.base": `"email" deve ser do tipo texto`,
@@ -26,9 +26,28 @@ const forgotPasswordSchema = Joi.object({
   }),
 });
 
-/**
- * Middleware para validar o corpo da requisição de login.
- */
+// NOVO: Schema de validação para a requisição de reset de senha
+const resetPasswordSchema = Joi.object({
+  token: Joi.string().hex().length(64).required().messages({
+    "string.base": `"token" deve ser do tipo texto`,
+    "string.hex": `"token" deve ser um token hexadecimal válido`,
+    "string.length": `"token" deve ter exatamente {#limit} caracteres`,
+    "any.required": `"token" é um campo obrigatório`,
+  }),
+  password: Joi.string().min(8).required().messages({
+    "string.base": `"password" deve ser do tipo texto`,
+    "string.min": `"password" deve ter no mínimo {#limit} caracteres`,
+    "any.required": `"password" é um campo obrigatório`,
+  }),
+  passwordConfirmation: Joi.any()
+    .valid(Joi.ref("password"))
+    .required()
+    .messages({
+      "any.only": `"passwordConfirmation" deve ser igual a "password"`,
+      "any.required": `"passwordConfirmation" é um campo obrigatório`,
+    }),
+});
+
 const validateLogin = (req, res, next) => {
   const { error } = loginSchema.validate(req.body);
   if (error) {
@@ -37,9 +56,6 @@ const validateLogin = (req, res, next) => {
   next();
 };
 
-/**
- * NOVO: Middleware para validar o corpo da requisição de recuperação de senha.
- */
 const validateForgotPassword = (req, res, next) => {
   const { error } = forgotPasswordSchema.validate(req.body);
   if (error) {
@@ -48,7 +64,17 @@ const validateForgotPassword = (req, res, next) => {
   next();
 };
 
+// NOVO: Middleware para validar o corpo da requisição de reset de senha
+const validateResetPassword = (req, res, next) => {
+  const { error } = resetPasswordSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+  next();
+};
+
 module.exports = {
   validateLogin,
-  validateForgotPassword, // Exportar a nova função
+  validateForgotPassword,
+  validateResetPassword, // Exportar a nova função
 };

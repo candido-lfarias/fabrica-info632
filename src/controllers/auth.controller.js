@@ -6,8 +6,6 @@ const authService = require("../services/auth.service");
 const authController = {
   /**
    * Lida com a requisição de login do usuário.
-   * @param {object} req - O objeto de requisição do Express.
-   * @param {object} res - O objeto de resposta do Express.
    */
   login: async (req, res) => {
     try {
@@ -29,8 +27,6 @@ const authController = {
 
   /**
    * Lida com a requisição de recuperação de senha.
-   * @param {object} req - O objeto de requisição do Express.
-   * @param {object} res - O objeto de resposta do Express.
    */
   forgotPassword: async (req, res) => {
     try {
@@ -49,15 +45,23 @@ const authController = {
 
   /**
    * Lida com a requisição de reset de senha.
-   * @param {object} req - O objeto de requisição do Express.
-   * @param {object} res - O objeto de resposta do Express.
    */
   resetPassword: async (req, res) => {
     try {
-      res
-        .status(501)
-        .json({ message: "Endpoint de resetPassword não implementado." });
+      const { token, password } = req.body;
+
+      // 1. Chama o service para executar a lógica de negócio
+      await authService.resetPassword(token, password);
+
+      // 2. Em caso de sucesso, envia uma resposta positiva
+      res.status(200).json({ message: "Senha redefinida com sucesso." });
     } catch (error) {
+      // 3. Se o service lançar um erro, captura e envia a resposta apropriada
+      if (error.message === "Token inválido ou expirado") {
+        return res.status(400).json({ message: error.message });
+      }
+
+      // Para qualquer outro erro inesperado
       res
         .status(500)
         .json({ message: "Erro interno no servidor.", error: error.message });

@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth.controller");
-// 1. Importar o novo middleware
+// 1. Importar todos os middlewares de validação
 const {
   validateLogin,
   validateForgotPassword,
+  validateResetPassword,
 } = require("../middlewares/validation.middleware");
 
 /**
@@ -39,21 +40,10 @@ const {
  *     responses:
  *       200:
  *         description: Login bem-sucedido
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Login bem-sucedido!
- *                 token:
- *                   type: string
- *                   example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
  *       400:
- *         description: Dados de entrada inválidos (ex: username faltando)
+ *         description: Dados de entrada inválidos
  *       401:
- *         description: Credenciais inválidas (usuário ou senha incorretos)
+ *         description: Credenciais inválidas
  */
 router.post("/login", validateLogin, authController.login);
 
@@ -78,19 +68,10 @@ router.post("/login", validateLogin, authController.login);
  *                 example: pedro.pohlmann@example.com
  *     responses:
  *       200:
- *         description: Resposta de sucesso genérica para evitar enumeração de usuários
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Se um usuário com este e-mail existir, um link de recuperação de senha foi enviado.
+ *         description: Resposta de sucesso genérica
  *       400:
  *         description: O e-mail fornecido é inválido
  */
-// 2. Conectar o middleware à rota
 router.post(
   "/forgot-password",
   validateForgotPassword,
@@ -103,10 +84,40 @@ router.post(
  *   post:
  *     summary: Reseta a senha do usuário com um token válido
  *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *               - password
+ *               - passwordConfirmation
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: O token recebido por e-mail.
+ *                 example: "a1b2c3d4..."
+ *               password:
+ *                 type: string
+ *                 description: A nova senha (mínimo 8 caracteres).
+ *                 example: "novaSenhaForte123"
+ *               passwordConfirmation:
+ *                 type: string
+ *                 description: A confirmação da nova senha.
+ *                 example: "novaSenhaForte123"
  *     responses:
- *       501:
- *         description: Endpoint não implementado
+ *       200:
+ *         description: Senha redefinida com sucesso
+ *       400:
+ *         description: Dados de entrada inválidos (token inválido/expirado, senhas não conferem)
  */
-router.post("/reset-password", authController.resetPassword);
+// 2. Conectar o middleware à rota
+router.post(
+  "/reset-password",
+  validateResetPassword,
+  authController.resetPassword,
+);
 
 module.exports = router;

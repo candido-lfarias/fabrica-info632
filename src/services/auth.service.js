@@ -4,17 +4,7 @@ const crypto = require("crypto");
 const db = require("../models/user.model");
 const emailService = require("../utils/email");
 
-/**
- * Lida com a lógica de negócio para autenticação.
- */
 const authService = {
-  /**
-   * Autentica um usuário e retorna um token JWT.
-   * @param {string} username - O nome de usuário.
-   * @param {string} password - A senha.
-   * @returns {Promise<string>} O token JWT.
-   * @throws {Error} Se as credenciais forem inválidas.
-   */
   login: async (username, password) => {
     const user = db.findByUsername(username);
     if (!user) {
@@ -38,11 +28,6 @@ const authService = {
     return token;
   },
 
-  /**
-   * Inicia o processo de recuperação de senha.
-   * @param {string} email - O email do usuário.
-   * @returns {Promise<void>}
-   */
   forgotPassword: async (email) => {
     const user = db.findByEmail(email);
 
@@ -73,12 +58,40 @@ const authService = {
 
   /**
    * Reseta a senha do usuário usando um token.
-   * @param {string} token - O token de reset.
+   * @param {string} token - O token de reset (não-hasheado).
    * @param {string} newPassword - A nova senha.
    * @returns {Promise<void>}
+   * @throws {Error} Se o token for inválido ou expirado.
    */
   resetPassword: async (token, newPassword) => {
-    throw new Error("Função resetPassword não implementada.");
+    // 1. Encontrar o usuário pelo token. Como armazenamos o hash,
+    // precisamos iterar e comparar.
+    let userFound = null;
+    for (const user of db.users) {
+      if (user.resetPasswordToken) {
+        const isMatch = await bcrypt.compare(token, user.resetPasswordToken);
+        if (isMatch) {
+          userFound = user;
+          break;
+        }
+      }
+    }
+
+    // 2. Verificar se o token é válido (usuário encontrado) E se não expirou.
+    if (!userFound || userFound.resetPasswordExpires < new Date()) {
+      // Mensagem de erro genérica por segurança.
+      throw new Error("Token inválido ou expirado");
+    }
+
+    // 3. Hashear a nova senha
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+    // 4. Atualizar a senha do usuário e invalidar o token de reset
+    db.updateUser(userFound.id, {
+      password: newPasswordHash,
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+    });
   },
 };
 
