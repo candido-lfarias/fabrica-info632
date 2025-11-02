@@ -1,11 +1,19 @@
-// Este é um middleware de validação placeholder para os testes.
-// Ele tem a estrutura correta (uma função que retorna outra função),
-// mas não faz nenhuma validação real. Ele apenas passa a requisição
-// para o próximo passo (o controller) chamando next().
-
 const validate = (schema) => (req, res, next) => {
-  // Não faz nada, apenas continua o fluxo
-  next();
+  try {
+    schema.parse({
+      body: req.body,
+      query: req.query,
+      params: req.params,
+    });
+
+    next();
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: 'Erro de validação.',
+      errors: error.errors.map(err => ({ path: err.path.join('.'), message: err.message })),
+    });
+  }
 };
 
 module.exports = validate;

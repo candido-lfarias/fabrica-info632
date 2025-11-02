@@ -18,5 +18,3 @@ cd fabrica-info631
 3. Instalar dependencias
 npm install
 4.configurar arquivo .env
- 
-
