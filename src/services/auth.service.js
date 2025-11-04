@@ -1,97 +1,68 @@
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const db = require("../models/user.model");
-const emailService = require("../utils/email");
+const userRepository = require("../models/user.repository");
 
 const authService = {
-  login: async (username, password) => {
-    const user = db.findByUsername(username);
-    if (!user) {
-      throw new Error("Credenciais inválidas");
-    }
-
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
-    if (!isPasswordMatch) {
-      throw new Error("Credenciais inválidas");
-    }
-
-    const payload = {
-      id: user.id,
-      role: user.role,
-    };
-
-    const token = jwt.sign(payload, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN,
-    });
-
-    return token;
-  },
-
-  forgotPassword: async (email) => {
-    const user = db.findByEmail(email);
-
-    if (!user) {
-      return;
-    }
-
-    const resetToken = crypto.randomBytes(32).toString("hex");
-    const hashedToken = await bcrypt.hash(resetToken, 10);
-
-    const expirationDate = new Date();
-    expirationDate.setMinutes(expirationDate.getMinutes() + 10);
-
-    db.updateUser(user.id, {
-      resetPasswordToken: hashedToken,
-      resetPasswordExpires: expirationDate,
-    });
-
-    const resetURL = `http://localhost:3000/reset-password?token=${resetToken}`;
-    const emailText = `Você solicitou uma redefinição de senha. Por favor, use o seguinte token para resetar sua senha. Este token é válido por 10 minutos.\n\nSeu token: ${resetToken}\n\nOu clique no link: ${resetURL}`;
-
-    await emailService.sendEmail({
-      to: user.email,
-      subject: "Recuperação de Senha - Fábrica INFO632",
-      text: emailText,
-    });
-  },
-
   /**
-   * Reseta a senha do usuário usando um token.
-   * @param {string} token - O token de reset (não-hasheado).
-   * @param {string} newPassword - A nova senha.
-   * @returns {Promise<void>}
-   * @throws {Error} Se o token for inválido ou expirado.
+   * Autentica um usuário pelo CPF e senha.
+   * @param {string} cpf - O CPF do usuário.
+   * @param {string} password - A senha.
+   * @returns {Promise<string>} O token JWT.
+   * @throws {Error} Se as credenciais forem inválidas.
    */
-  resetPassword: async (token, newPassword) => {
-    // 1. Encontrar o usuário pelo token. Como armazenamos o hash,
-    // precisamos iterar e comparar.
-    let userFound = null;
-    for (const user of db.users) {
-      if (user.resetPasswordToken) {
-        const isMatch = await bcrypt.compare(token, user.resetPasswordToken);
-        if (isMatch) {
-          userFound = user;
-          break;
-        }
+  login: async (cpf, password) => {
+    console.log("6. Service authService.login iniciado");
+    try {
+      console.log("7. Chamando userRepository.findByCpf");
+      const userRecord = await userRepository.findByCpf(cpf);
+      console.log(
+        "-> userRepository.findByCpf retornou:",
+        userRecord
+          ? `Usuário encontrado com idpessoa: ${userRecord.pessoa_idpessoa}`
+          : "Usuário NÃO encontrado",
+      );
+
+      const user = userRecord?.usuario?.[0];
+      const person = userRecord?.pessoa;
+
+      if (!user?.senha || !person) {
+        console.log(
+          "-> Falha na validação: usuário, senha ou pessoa não encontrados no registro.",
+        );
+        throw new Error("Credenciais inválidas");
       }
+
+      const { senha: storedPasswordHash, role, idusuario: userId } = user;
+      const { nome } = person;
+
+      console.log("-> Comparando senhas...");
+      const isPasswordMatch = await bcrypt.compare(
+        password,
+        storedPasswordHash,
+      );
+      if (!isPasswordMatch) {
+        console.log("-> Falha na validação: senhas não conferem.");
+        throw new Error("Credenciais inválidas");
+      }
+      console.log("-> Senhas conferem. Gerando token JWT.");
+
+      const payload = {
+        id: userId,
+        nome: nome,
+        cpf: userRecord.cpf,
+        role: role,
+      };
+
+      const token = jwt.sign(payload, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN || "1h",
+      });
+
+      return token;
+    } catch (error) {
+      console.error("ERRO no service:", error.message);
+      // Re-lança o erro para que o controller possa tratá-lo e enviar a resposta HTTP correta.
+      throw error;
     }
-
-    // 2. Verificar se o token é válido (usuário encontrado) E se não expirou.
-    if (!userFound || userFound.resetPasswordExpires < new Date()) {
-      // Mensagem de erro genérica por segurança.
-      throw new Error("Token inválido ou expirado");
-    }
-
-    // 3. Hashear a nova senha
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-
-    // 4. Atualizar a senha do usuário e invalidar o token de reset
-    db.updateUser(userFound.id, {
-      password: newPasswordHash,
-      resetPasswordToken: null,
-      resetPasswordExpires: null,
-    });
   },
 };
 

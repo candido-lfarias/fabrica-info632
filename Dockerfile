@@ -1,20 +1,19 @@
-# Usar uma imagem base do Node.js
-FROM node:16
+# Usar a imagem Node.js completa para máxima compatibilidade
+FROM node:20
 
-# Definir o diretório de trabalho dentro do container
 WORKDIR /app
 
-# Copiar o package.json e package-lock.json
+# Copiar os arquivos de dependência E o schema do Prisma
+# O schema é necessário para o script "postinstall" funcionar.
 COPY package*.json ./
+COPY prisma ./prisma/
 
-# Instalar as dependências
+# Instalar as dependências. O script "postinstall" irá acionar "prisma generate".
 RUN npm install
 
-# Copiar o restante do código da aplicação
+# Copiar o restante do código-fonte
 COPY . .
 
-# Expor a porta em que a aplicação vai rodar
 EXPOSE 3000
 
-# Comando para rodar a aplicação
 CMD ["npm", "run", "dev"]

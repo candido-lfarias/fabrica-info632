@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const authRoutes = require("./auth.routes"); // 1. Importar as novas rotas
+const authRoutes = require("./auth.routes");
 
 /**
  * @swagger
@@ -48,7 +48,7 @@ router.get("/version", (req, res) => {
   res.json({ version: "1.0.0" });
 });
 
-// 2. Montar as rotas de autenticação sob o prefixo /auth
+// Montar as rotas de autenticação sob o prefixo /auth
 router.use("/auth", authRoutes);
 
 module.exports = router;
