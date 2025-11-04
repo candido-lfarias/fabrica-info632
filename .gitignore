@@ -1,3 +1,7 @@
+# database
+mysql-data/
+database/*.sql
+
 # Logs
 logs
 *.log
