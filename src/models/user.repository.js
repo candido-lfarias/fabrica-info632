@@ -1,5 +1,3 @@
-// 1. Importar a instância Singleton do banco de dados
-const database = require("../database/Database");
 const prisma = require("../database/Database");
 
 const userRepository = {
@@ -9,14 +7,18 @@ const userRepository = {
    * @returns {Promise<object|null>} O objeto do usuário ou null se não for encontrado.
    */
   findByCpf: async (cpf) => {
-    // 2. Usar a instância compartilhada do Prisma
-    const user = await prisma.pessoa_fisica.findUnique({
+    const user = await prisma.pessoa_fisica.findFirst({
       where: {
         cpf: cpf,
       },
+      // CORREÇÃO: Aninhar o 'include' para seguir o relacionamento correto
+      // pessoa_fisica -> pessoa -> usuario
       include: {
-        pessoa: true, // Inclui dados da tabela 'pessoa' (nome, e-mail, etc.)
-        usuario: true, // Inclui dados da tabela 'usuario' (senha, role)
+        pessoa: {
+          include: {
+            usuario: true,
+          },
+        },
       },
     });
 
