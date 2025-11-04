@@ -1,20 +1,23 @@
-# Usar uma imagem base do Node.js
-FROM node:16
+# Use uma imagem atual e segura
+FROM node:20-alpine3.20
 
-# Definir o diretório de trabalho dentro do container
+# Definir o diretório de trabalho
 WORKDIR /app
 
-# Copiar o package.json e package-lock.json
+# Copiar os arquivos de dependência
 COPY package*.json ./
 
-# Instalar as dependências
-RUN npm install
+# Instalar dependências de forma limpa
+RUN npm ci --omit=dev
 
-# Copiar o restante do código da aplicação
+# Atualizar pacotes do sistema para mitigar CVEs
+RUN apk update && apk upgrade --no-cache
+
+# Copiar o restante do código
 COPY . .
 
-# Expor a porta em que a aplicação vai rodar
+# Expor a porta da aplicação
 EXPOSE 3000
 
-# Comando para rodar a aplicação
+# Comando para iniciar a aplicação
 CMD ["npm", "run", "dev"]
