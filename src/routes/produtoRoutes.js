@@ -1,13 +1,9 @@
-// Arquivo: src/routes/produtoRoutes.js
-
 const { Router } = require('express');
 const produtoController = require('../controllers/produtoController');
-const validate = require('../middlewares/validate'); // Nosso middleware de validação
+const validate = require('../middlewares/validate');
 const { createProdutoSchema, updateProdutoSchema } = require('../validators/produtoValidator');
 
 const router = Router();
-
-// --- Rotas para o CRUD de Produto ---
 
 /**
  * @swagger

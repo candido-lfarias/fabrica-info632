@@ -1,5 +1,3 @@
-// Arquivo: src/controllers/produtoController.js
-
 const produtoService = require('../services/produtoService');
 
 class ProdutoController {
@@ -19,7 +17,6 @@ class ProdutoController {
 
   async list(req, res, next) {
     try {
-      // No futuro, podemos pegar filtros de req.query aqui
       const produtos = await produtoService.listProdutos();
       return res.status(200).json({
         success: true,
@@ -33,7 +30,7 @@ class ProdutoController {
   async getById(req, res, next) {
     try {
       const { id } = req.params;
-      const produto = await produtoService.findProdutoById(Number(id)); // Lembre-se de converter para número
+      const produto = await produtoService.findProdutoById(Number(id));
       return res.status(200).json({
         success: true,
         data: produto,
@@ -61,7 +58,7 @@ class ProdutoController {
     try {
       const { id } = req.params;
       await produtoService.deleteProduto(Number(id));
-      return res.status(204).send(); // 204 No Content
+      return res.status(204).send();
     } catch (error) {
       next(error);
     }
