@@ -1,22 +1,25 @@
-## Controlede Produção
+# 📦 API – Controle de Produção 632
 
-# API de Controle de Produção
-Este Projeto é uma API para a gestão de Produção de uma pequena industria. Fornecendo um conjunto de serviços especializados, utilizando Nodejs, Express, Swagger, . . . .
+API desenvolvida para gerenciamento e monitoramento da produção de uma pequena indústria.  
+O sistema fornece serviços REST para controle de ordens, itens e processos de fabricação.
 
-## Como rodar o projeto
-### Pré-Requisitos
-Nodejs (V16 ou superior)
-npm ou yarn
-Git
+---
 
-### Passos para execução
-1. clone do repositorio
-https://github.com/candido-lfarias/fabrica-info631.git
+## 🚀 Tecnologias Utilizadas
+- Node.js (>= 16)
+- Express.js
+- Swagger (para documentação)
+- MongoDB (ou outro banco configurado no .env)
+- Dotenv para variáveis de ambiente
+- Docker (opcional)
 
-2. Acesse a pasta do projeto:
-cd fabrica-info631
-3. Instalar dependencias
-npm install
-4.configurar arquivo .env
- 
+---
 
+## 📁 Estrutura do Projeto
+
+/src
+ ├── controllers/    # Lógica da aplicação
+ ├── models/         # Modelos de banco de dados
+ ├── routes/         # Rotas da API
+ ├── config/         # Configuração e conexão com banco
+ └── index.js        # Arquivo principal da aplicação
