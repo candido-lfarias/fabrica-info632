@@ -1,6 +1,5 @@
 // src/database/Database.js
-
-const { PrismaClient } = require('@prisma/client'); // Usando require para importar o PrismaClient
+const { PrismaClient } = require('@prisma/client');
 
 class Database {
   constructor() {
@@ -30,4 +29,4 @@ class Database {
 const database = new Database();
 Object.freeze(database);
 
-module.exports = database; // Usando module.exports para exportar a instância do Database
+module.exports = database;
