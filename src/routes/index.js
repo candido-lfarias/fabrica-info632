@@ -2,15 +2,10 @@ const express = require('express');
 const router = express.Router();
 const fornecedorRoutes = require('./FornecedorRoutes'); 
 
-/**
- * @swagger
- * 
- * /get:
- *     summary: Retorna uma mensagem de boas-vindas
- *     responses:
- *       200:
- *         description: Bem vindo a API de Gestão de Produção'
- */
+// Importe as rotas de usuário
+const userRoutes = require('./userRoutes');
+
+// Rota de boas-vindas
 router.get('/', (req, res) => {
   res.json({ mensagem: 'Bem vindo a API de Gestão de Produção' });
 });
