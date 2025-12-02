@@ -13,3 +13,34 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+// O prompt menciona MySQL, mas seu arquivo estava como postgresql.
+// Ajuste o provider conforme seu banco real.
+datasource db {
+  provider = "mysql" 
+  url      = env("DATABASE_URL")
+}
+
+model Fornecedor {
+  id              Int       @id @default(autoincrement())
+  cnpjCpf         String    @unique
+  ie              String?   // Inscrição Estadual / Isento
+  razao           String    // Razão Social / Nome
+  nomeFantasia    String?   
+  contatos        Json      // Array de objetos armazenado como JSON
+  condPagtoPadrao String?   // Condição de pagamento padrão
+  leadTimeDias    Int?      // Lead time padrão em dias
+  qualificacao    String    @default("APROVADO") // APROVADO, SUSPENSO
+  
+  // Auditoria e Soft Delete
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  @@map("fornecedores")
+}
